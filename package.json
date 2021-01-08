@@ -4,9 +4,7 @@
   "description": "",
   "main": "app.js",
   "dependencies": {
-    "coinbase": "^2.0.8",
-    "ejs": "^3.1.5",
-    "express": "^4.17.1"
+    "coinbase": "^2.0.8"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
