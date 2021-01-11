@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "dependencies": {
-    "coinbase": "^2.0.8"
+    "coinbase": "^2.0.8",
+    "nodemailer": "^6.4.17"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
