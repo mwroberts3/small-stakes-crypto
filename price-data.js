@@ -16,6 +16,8 @@ let emailTiming = {
 
 let buyPercentageDrop;
 let amountToPurchase;
+// resets current price every 10 hours, unless there's been an increase
+let resetInterval = 36000;
 
 exports.getETHPrice = () => {
   cb.client.getAccount(cb.accountPayment.ETHAccountId, function(err, account) {
@@ -43,6 +45,7 @@ exports.getETHPrice = () => {
 function checkAndBuyETH() {
   let percentageDrop;
   amountToPurchase = 25;
+  cbTransactionFee = 1.49;
 
   // gets buyprice at last sale
   let buyPriceAtLastSale = fs.readFileSync(path.join(__dirname, 'sell-balance-threshold.json')).toString('utf-8');
@@ -62,7 +65,7 @@ function checkAndBuyETH() {
         console.log(`${percentageDrop}`, buyPercentageDrop, price.data.amount, previousFiveHour.BuyPrice, time.data.epoch);
 
         if (err === null) {
-          if (time.data.epoch > +previousFiveHour.time + 18000 || percentageDrop > 0) {
+          if (time.data.epoch > +previousFiveHour.time + resetInterval || percentageDrop > 0) {
             fs.writeFile((path.join(__dirname, 'buy-price.json')), JSON.stringify({BuyPrice: price.data.amount, time: time.data.epoch }), (err) => {
               if (err) console.log(err)
               console.log(`NEW PRICE: ${price.data.amount} TIME: ${time.data.epoch}`)
@@ -74,51 +77,61 @@ function checkAndBuyETH() {
             });
           }
 
-          if (percentageDrop < -5 && !checkForRebound) {
-            sellOffSafeGuardCheck(price.data.amount, time.data.epoch);
-          }
+          // if (percentageDrop < -5 && !checkForRebound) {
+          //   sellOffSafeGuardCheck(price.data.amount, time.data.epoch);
+          // }
 
-          if (checkForRebound) { 
-            console.log(150);
+          // if (checkForRebound) { 
+          //   console.log(150);
 
-            // Email yourself a notification when approaching reinvest threshold
-            if (price.data.amount <= 500) {  
-              if (time.data.epoch - emailTiming.priceLessThan500 >= 3600) {
-                cb.transporter.sendMail(emailMsg.priceLessThan500, (err, info) => {
-                  if (err) {
-                    console.log(err)
-                  } else {
-                    console.log('email sent', info.response)
-                    emailTiming.priceLessThan500 = time.data.epoch
-                  }
-                })
-              }
-            }
+          //   // Email yourself a notification when approaching reinvest threshold
+          //   if (price.data.amount <= 500) {  
+          //     if (time.data.epoch - emailTiming.priceLessThan500 >= 3600) {
+          //       cb.transporter.sendMail(emailMsg.priceLessThan500, (err, info) => {
+          //         if (err) {
+          //           console.log(err)
+          //         } else {
+          //           console.log('email sent', info.response)
+          //           emailTiming.priceLessThan500 = time.data.epoch
+          //         }
+          //       })
+          //     }
+          //   }
 
-            // Hard coded this to $150 to wait for did to really low price
-            if (price.data.amount <= 150) {
+          //   // Hard coded this to $150 to wait for did to really low price
+          //   if (price.data.amount <= 150) {
 
-              // needs to set the reinvest amount to equal the amount sold off
-              amountToPurchase = buyPriceAtLastSale.valueUSD;
+          //     // needs to set the reinvest amount to equal the amount sold off
+          //     amountToPurchase = buyPriceAtLastSale.valueUSD;
               
-              // once the downward trend starts to reverse, rebuy ether
-              buyPercentageDrop = 2;
-            }
-          }
+          //     // once the downward trend starts to reverse, rebuy ether
+          //     buyPercentageDrop = 2;
+          //   }
+          // }
           
           if (percentageDrop < buyPercentageDrop){
             // Purchase coin
             cb.client.getAccount(cb.accountPayment.ETHAccountId, function(err, account) {
               account.buy({"amount": amountToPurchase.toString(),
                            "currency": "USD",
-                           "payment_method": cb.accountPayment.fiatPaymentMethodId}, function(err, tx) {
-                             // Make sure enough funds in wallet before updating most recent paid price
-                            if (!err) {
-                            console.log(tx);
-                            fs.writeFileSync(path.join(__dirname, 'most-recent-paidprice.json'), JSON.stringify({PaidPrice: +price.data.amount, time: time.data.epoch }))
-                          } else {
-                            console.log(err)
-                          }
+                           "payment_method": cb.accountPayment.fiatPaymentMethodId
+              }, function(err, tx) {
+                  // Make sure enough funds in wallet before updating most recent paid price
+                if (!err) {
+                console.log(tx);
+                fs.writeFileSync(path.join(__dirname, 'most-recent-paidprice.json'), JSON.stringify({PaidPrice: +price.data.amount, time: time.data.epoch }))
+
+            // Send email notification
+            cb.transporter.sendMail(emailMsg.youJustBoughtCrypto, (err, info) => {
+              if (err) {
+                console.log(err)
+              } else {
+                console.log('email sent', info.response)
+              }
+            })
+            } else {
+              console.log(err)
+            }
               });
             });
             
@@ -129,7 +142,7 @@ function checkAndBuyETH() {
             totalBuyIn = totalBuyIn['Total-Buy-In'];
             checkForRebound = false;
 
-            fs.writeFileSync(path.join(__dirname, 'sell-balance-threshold.json'), JSON.stringify({'Total-Buy-In': totalBuyIn + amountToPurchase, 'Check-For-Rebound': 'false', 'buyPriceAtLastSale': buyPriceAtLastSale.buyPriceAtLastSale, 'valueUSD': buyPriceAtLastSale.valueUSD, 'time': buyPriceAtLastSale.time}))
+            fs.writeFileSync(path.join(__dirname, 'sell-balance-threshold.json'), JSON.stringify({'Total-Buy-In': totalBuyIn + amountToPurchase + cbTransactionFee, 'Check-For-Rebound': 'false', 'buyPriceAtLastSale': buyPriceAtLastSale.buyPriceAtLastSale, 'valueUSD': buyPriceAtLastSale.valueUSD, 'time': buyPriceAtLastSale.time}))
 
             // Reset 5 hour timer
             fs.writeFile((path.join(__dirname, 'buy-price.json')), JSON.stringify({BuyPrice: price.data.amount, time: time.data.epoch }), (err) => {
@@ -208,44 +221,54 @@ function setBuyPercentageDrop(price) {
   // Get latest paid price
   fs.readFile((path.join(__dirname, 'most-recent-paidprice.json')), (err, data) => {
     if (err) throw err;
+
     mostRecentPaidPrice = JSON.parse(data.toString());
 
-    if (price >= mostRecentPaidPrice.PaidPrice * 1.1) {
-      buyPercentageDrop = -5;
+    if (price >= mostRecentPaidPrice.PaidPrice * 1.25) {
+      buyPercentageDrop = -1;
+    } else if (price >= mostRecentPaidPrice.PaidPrice * 1.1) {
+      buyPercentageDrop = -3;
     } else if (price >= mostRecentPaidPrice.PaidPrice * 1.05 && price < mostRecentPaidPrice.PaidPrice * 1.1) {
-      buyPercentageDrop = -7
+      buyPercentageDrop = -5;
     } else {
-      buyPercentageDrop = -10
+      buyPercentageDrop = -7
     }
-
-    if (checkForRebound) {
-      buyPercentageDrop = -1000
-    }
-
   });
 }
 
 function checkForBankDeposit(time) {
-    // Currently set up for monthly deposits of 52 dollars
+    // Currently set up for monthly deposits of 53 dollars
     // get time of last deposit, then check if it has been a month
     let timeOfLastDeposit;
     timeOfLastDeposit = fs.readFileSync(path.join(__dirname, 'latest-deposit.json')).toString('utf-8');
     timeOfLastDeposit = JSON.parse(timeOfLastDeposit).timeOfDeposit;
 
-    // console.log('time until next deposit', (timeOfLastDeposit + 2.628e+6) - time)
+    // console.log('time until next deposit', (timeOfLastDeposit + 604800) - time)
+    // 2.628e+6 - 4 weeks
+    // 1.21e+6 - 2 weeks
+    // 604800 - 1 week
 
-    if (time >= timeOfLastDeposit + 2.628e+6) {
+    if (time >= timeOfLastDeposit + 604800) {
       cb.client.getAccount(cb.accountPayment.fiatAccountId, function(err, account) {
         console.log(account)
 
-        account.deposit({"amount": "53",
+        account.deposit({"amount": "26.5",
                          "currency": "USD",
                          "payment_method": cb.accountPayment.bankAccountId}, function(err, tx) {
           console.log(tx);
           if (err) console.log(err);
         });
 
-        fs.writeFile((path.join(__dirname, 'latest-deposit.json')), JSON.stringify({monthlyDepositAmount: 53, timeOfDeposit: time }), (err) => {
+        // Send email notification
+        cb.transporter.sendMail(emailMsg.bankWithdrawal, (err, info) => {
+          if (err) {
+            console.log(err)
+          } else {
+            console.log('email sent', info.response)
+          }
+        })
+
+        fs.writeFile((path.join(__dirname, 'latest-deposit.json')), JSON.stringify({monthlyDepositAmount: 26.5, timeOfDeposit: time }), (err) => {
           if (err) console.log(err)
         })
       });
