@@ -9,13 +9,14 @@ let ETHAccountTotal;
 let previousFiveHour = {};
 let mostRecentPaidPrice;
 
+let buyPercentageDrop;
+let amountToPurchase;
+
 let emailTiming = {
   approachingSafeguard: 0,
   priceLessThan500: 0
 };
 
-let buyPercentageDrop;
-let amountToPurchase;
 // resets current price every 10 hours, unless there's been an increase
 let resetInterval = 36000;
 
@@ -66,15 +67,7 @@ function checkAndBuyETH() {
 
         if (err === null) {
           if (time.data.epoch > +previousFiveHour.time + resetInterval || percentageDrop > 0) {
-            fs.writeFile((path.join(__dirname, 'buy-price.json')), JSON.stringify({BuyPrice: price.data.amount, time: time.data.epoch }), (err) => {
-              if (err) console.log(err)
-              console.log(`NEW PRICE: ${price.data.amount} TIME: ${time.data.epoch}`)
-
-              fs.readFile((path.join(__dirname, 'buy-price.json')), (err, data) => {
-                if (err) throw err;
-                previousFiveHour = JSON.parse(data.toString());
-              });
-            });
+            resetPctDropTimer(price.data.amount, time.data.epoch);
           }
 
           // if (percentageDrop < -5 && !checkForRebound) {
@@ -116,44 +109,44 @@ function checkAndBuyETH() {
                            "currency": "USD",
                            "payment_method": cb.accountPayment.fiatPaymentMethodId
               }, function(err, tx) {
-                  // Make sure enough funds in wallet before updating most recent paid price
                 if (!err) {
-                console.log(tx);
-                fs.writeFileSync(path.join(__dirname, 'most-recent-paidprice.json'), JSON.stringify({PaidPrice: +price.data.amount, time: time.data.epoch }))
+                  // Send email notification
+                  cb.transporter.sendMail(emailMsg.youJustBoughtCrypto, (err, info) => {
+                      if (err) {
+                        console.log(err)
+                      } else {
+                        console.log('email sent', info.response)
+                      }
+                    }
+                  )
 
-            // Send email notification
-            cb.transporter.sendMail(emailMsg.youJustBoughtCrypto, (err, info) => {
-              if (err) {
-                console.log(err)
-              } else {
-                console.log('email sent', info.response)
-              }
+                  // Update most recent paid price
+                  console.log(tx);
+                  fs.writeFileSync(path.join(__dirname, 'most-recent-paidprice.json'), JSON.stringify({PaidPrice: +price.data.amount, time: time.data.epoch }))
+
+                  // get former total buy in
+                  totalBuyIn = fs.readFileSync(path.join(__dirname, 'sell-balance-threshold.json')).toString('utf-8');
+                  totalBuyIn = JSON.parse(totalBuyIn);  
+                  console.log(totalBuyIn)
+                  totalBuyIn = totalBuyIn['Total-Buy-In'];
+                  checkForRebound = false;
+
+                  // add to total buy in
+                  fs.writeFileSync(path.join(__dirname, 'sell-balance-threshold.json'), JSON.stringify({
+                    'Total-Buy-In': totalBuyIn + amountToPurchase + cbTransactionFee, 
+                    'Check-For-Rebound': 'false', 
+                    'buyPriceAtLastSale': buyPriceAtLastSale.buyPriceAtLastSale, 
+                    'valueUSD': buyPriceAtLastSale.valueUSD, 
+                    'time': buyPriceAtLastSale.time
+                  }))
+
+                  resetPctDropTimer(price.data.amount, time.data.epoch);
+                } else {
+                  console.log(err)
+                  resetPctDropTimer(price.data.amount, time.data.epoch);
+                }
+              })
             })
-            } else {
-              console.log(err)
-            }
-              });
-            });
-            
-            // add to total buy in
-            totalBuyIn = fs.readFileSync(path.join(__dirname, 'sell-balance-threshold.json')).toString('utf-8');
-            totalBuyIn = JSON.parse(totalBuyIn);  
-            console.log(totalBuyIn)
-            totalBuyIn = totalBuyIn['Total-Buy-In'];
-            checkForRebound = false;
-
-            fs.writeFileSync(path.join(__dirname, 'sell-balance-threshold.json'), JSON.stringify({'Total-Buy-In': totalBuyIn + amountToPurchase + cbTransactionFee, 'Check-For-Rebound': 'false', 'buyPriceAtLastSale': buyPriceAtLastSale.buyPriceAtLastSale, 'valueUSD': buyPriceAtLastSale.valueUSD, 'time': buyPriceAtLastSale.time}))
-
-            // Reset 5 hour timer
-            fs.writeFile((path.join(__dirname, 'buy-price.json')), JSON.stringify({BuyPrice: price.data.amount, time: time.data.epoch }), (err) => {
-              if (err) console.log(err)
-              console.log(`NEW PRICE: ${price.data.amount} TIME: ${time.data.epoch}`)
-
-              fs.readFile((path.join(__dirname, 'buy-price.json')), (err, data) => {
-                if (err) throw err;
-                previousFiveHour = JSON.parse(data.toString());
-              });
-            });
           }
         }
       }
@@ -203,16 +196,7 @@ function sellOffSafeGuardCheck(price, time) {
 
     fs.writeFileSync(path.join(__dirname, 'sell-balance-threshold.json'), JSON.stringify({'Total-Buy-In': 0, 'Check-For-Rebound': 'true', 'buyPriceAtLastSale': price, 'valueUSD': totalBuyIn, 'time': time }))
 
-  // Reset 5 hour timer
-  fs.writeFile((path.join(__dirname, 'buy-price.json')), JSON.stringify({BuyPrice: price, time: time }), (err) => {
-    if (err) console.log(err)
-    console.log(`NEW PRICE: ${price} TIME: ${time}`)
-
-    fs.readFile((path.join(__dirname, 'buy-price.json')), (err, data) => {
-      if (err) throw err;
-      previousFiveHour = JSON.parse(data.toString());
-    });
-  });
+    resetPctDropTimer(price, time);
   }
   })
 }
@@ -273,4 +257,17 @@ function checkForBankDeposit(time) {
         })
       });
     }
+}
+
+function resetPctDropTimer(price, time) {
+    // Reset 5 hour timer
+    fs.writeFile((path.join(__dirname, 'buy-price.json')), JSON.stringify({BuyPrice: price, time: time }), (err) => {
+      if (err) console.log(err)
+      console.log(`NEW PRICE: ${price} TIME: ${time}`)
+  
+      fs.readFile((path.join(__dirname, 'buy-price.json')), (err, data) => {
+        if (err) throw err;
+        previousFiveHour = JSON.parse(data.toString());
+      });
+    });
 }

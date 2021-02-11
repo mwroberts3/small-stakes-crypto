@@ -8,10 +8,10 @@
         "timeOfDeposit":1612367166
     },
     "mostRecentPaidPriceData": {
-        "PaidPrice":1213.5,
-        "time":1610649700
+        "PaidPrice":1596.55,
+        "time":1612451217
     },
     "sellBalanceThresholdData": {
-        "Total-Buy-In":154.47,"Check-For-Rebound":"false","buyPriceAtLastSale":"1063.44","valueUSD":82,"time":1610336446
+        "Total-Buy-In":180.96,"Check-For-Rebound":"false","buyPriceAtLastSale":"1063.44","valueUSD":82,"time":1610336446
     }
 }
