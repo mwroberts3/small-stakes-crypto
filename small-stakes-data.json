@@ -1,17 +1,17 @@
 {
     "buyPriceData": {
-        "BuyPrice":"1665.79",
-        "time":1612394331 
+        "buyPrice":"1813.61",
+        "time":1614030416 
     },
     "latestDepositData": {
         "monthlyDepositAmount":26.5,
-        "timeOfDeposit":1612367166
+        "timeOfDeposit":1613576768
     },
-    "mostRecentPaidPriceData": {
-        "PaidPrice":1596.55,
-        "time":1612451217
+    "mostRecentTransactionPrice": {
+        "transactionPrice":1776.88,
+        "time":1614006344
     },
-    "sellBalanceThresholdData": {
-        "Total-Buy-In":180.96,"Check-For-Rebound":"false","buyPriceAtLastSale":"1063.44","valueUSD":82,"time":1610336446
+    "totalBuyIn": {
+        "totalBuyIn": 208
     }
 }
