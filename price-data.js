@@ -6,7 +6,7 @@ const emailMsg = require('./email-messages');
 let smallStakesData;
 let totalBuyIn;
 let previousFiveHour = {};
-let mostRecentTransactionPrice;
+let highestBuyPrice;
 
 let buyPercentageDrop;
 let amountToPurchase;
@@ -71,18 +71,20 @@ function checkAndBuyETH() {
               }, function(err, tx) {
                 if (!err) {
                   console.log(tx);
-                  // update mostRecentTransactionPrice
+                  // update buyPriceHistory
                   smallStakesData = fs.readFileSync(path.join(__dirname, 'small-stakes-data.json')).toString('utf-8');
                   smallStakesData = JSON.parse(smallStakesData); 
 
-                  smallStakesData['mostRecentTransactionPrice']['transactionPrice'] = +price.data.amount;
+                  smallStakesData['buyPriceHistory'].push(+price.data.amount);
 
-                  smallStakesData['mostRecentTransactionPrice']['time'] = time.data.epoch;
+                  smallStakesData['buyPriceHistory'].sort((a,b) => {
+                    return b - a;
+                  });
 
                   // add to total buy in
                   smallStakesData['totalBuyIn']['totalBuyIn'] += (amountToPurchase + cbTransactionFee);
 
-                   // save changes to small-stakes-data.json
+                  // save changes to small-stakes-data.json
                   fs.writeFileSync(path.join(__dirname, 'small-stakes-data.json'), JSON.stringify(smallStakesData));
 
                   // Send email notification
@@ -116,24 +118,25 @@ function setBuyPercentageDrop(price, time) {
 
     smallStakesData = JSON.parse(data.toString());
 
-    mostRecentTransactionPrice = smallStakesData['mostRecentTransactionPrice'];
+    highestBuyPrice = smallStakesData['buyPriceHistory'][0];
 
-    if (price >= mostRecentTransactionPrice.transactionPrice * 1.15) {
+    if (price >= highestBuyPrice * 1.15) {
       buyPercentageDrop = -0.5;
-    } else if (price >= mostRecentTransactionPrice.transactionPrice * 1.1) {
-      buyPercentageDrop = -2;
-    } else if (price >= mostRecentTransactionPrice.transactionPrice * 1.05) {
+    } else if (price >= highestBuyPrice * 1.05) {
+      buyPercentageDrop = -3;
+    } else if (price >= highestBuyPrice) {
       buyPercentageDrop = -5;
     } else {
       buyPercentageDrop = -7;
     }
 
-    sellOffSafeGuardCheck(mostRecentTransactionPrice.transactionPrice, price, time);
+    sellOffSafeGuardCheck(highestBuyPrice, price, time);
   });
 }
 
-function sellOffSafeGuardCheck(mostRecentTransactionPrice, price, time) {
-  if (price <= mostRecentTransactionPrice * 0.9) {
+function sellOffSafeGuardCheck(highestBuyPrice, price, time) {
+  if (price <= highestBuyPrice * 0.9) {
+
     cb.client.getAccount(cb.accountPayment.ETHAccountId, function(err, account) {
       account.sell({"amount": amountToSell.toString(),
         "currency": "USD",
@@ -141,13 +144,11 @@ function sellOffSafeGuardCheck(mostRecentTransactionPrice, price, time) {
 
         if (!err) {
           console.log(tx);
-          // update mostRecentTransactionPrice
+          // update buyPriceHistory
           smallStakesData = fs.readFileSync(path.join(__dirname, 'small-stakes-data.json')).toString('utf-8');
           smallStakesData = JSON.parse(smallStakesData); 
 
-          smallStakesData['mostRecentTransactionPrice']['transactionPrice'] = price;
-
-          smallStakesData['mostRecentTransactionPrice']['time'] = time;
+          smallStakesData['buyPriceHistory'].splice(0,1);
 
           // subtract from total buy in
           smallStakesData['totalBuyIn']['totalBuyIn'] -= amountToSell;

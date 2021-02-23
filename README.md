@@ -23,6 +23,11 @@ The only thing not included in this repo is my personal account data, required f
 
 Not reflected in the package.json file is Forever.js, which I strong recommend running this script through. Also, I made a batch file and put a shortcut in my PC's startup folder so the script will start running automatically if computer is shutdown and restarted.
 
+## Basic Logic of Bot
+
+-selling off occurs when the current buy price of ETH is less than 90% of the most recent transaction price
+-this is based around a $26.49 transaction per week
+
 ## Updates to Come
 
 I will probably wait until ETH is relative stable and cheaper before continuing serious work on this program. Ultimately I want this to be a 'set it and forget about it' kind of program.
