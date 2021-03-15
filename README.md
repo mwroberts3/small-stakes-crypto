@@ -1,33 +1,40 @@
 # Small Stakes - Crypto
 
-**Version 0.5.0**
+**Version 1.0.0**
 <br>
-**Released 1/11/21**
+**Released 3/15/21**
 <br>
 
 ## Features
 
-This is a very basic Coinbase-based crypto trading bot, though I hesitate to call it a bot, because I wouldn't trust it to run on its own at this point
+Basic Ether trading bot that works through the Coinbase API. Could be tweaked to work with any crypto coin.
 
 ## Usage
 
-You might have to have some basic knowledge of node.js to get the most out of this an understand its inner-workings. But, overall, the logic is not complicated and is still getting iterated upon.
+Usage is pretty self-explanatory. It's a node program that can be run in a terminal. One thing you'll have to do however is make a JavaScript file in the root directory called personal-data-pro.js, which contains personal email information and Coinbase Pro API information.
 
-The basic principle of is to have the bot watch for a sharp dip in price over a given amount of time and invest at that moment, before it rebounds.
+`module.exports = { key: 'your API key', secret:'your API secret', passphrase: 'your API passphrase', email: 'your email address', emailPass: 'your email password' }`
 
-I don't think I have to go into too detail, but this might be fun to look at for a node beginner who wants play around with trading bots, though give the current state of crypto, now is probably not the best to start investing.
+It might be worth using with forever.js depending on your setup.
 
-The only thing not included in this repo is my personal account data, required for the bot run properly. You'll need to make your own personal-data.js file and fill it out with your own information.
+## Basic Logic
 
-`module.exports = { key: 'your Coinbase API key', secret: 'your Coinbase API secret', ETHAccountId: 'your ETH coinbase account id', fiatPaymentMethodId: 'your fiat payment method id', fiatAccountId: 'your fiat account id', bankAccountId: 'your bank account id', email: 'your gmail', emailPass: 'your gmail password' }`
+The golden rule of trading applies here: <em>sell high and buy low</em>.
 
-Not reflected in the package.json file is Forever.js, which I strong recommend running this script through. Also, I made a batch file and put a shortcut in my PC's startup folder so the script will start running automatically if computer is shutdown and restarted.
+This section will be fleshed out more in the future, but as of 3/15/21 the bot is <em>barely</em> profit, so I guess the logic is sound on some level.
 
-## Basic Logic of Bot
-
--selling off occurs when the current buy price of ETH is less than 90% of the most recent transaction price
--this is based around a $26.49 transaction per week
+I think it's pretty easy to decipher how it works by looking at the code. It's not a very sophisticated bot that I'm sure is bested by most others out there. This is more of a pet project than anything.
 
 ## Updates to Come
 
-I will probably wait until ETH is relative stable and cheaper before continuing serious work on this program. Ultimately I want this to be a 'set it and forget about it' kind of program.
+The logic will be tweaked continuously I imagine, and I'll continue to update here.
+
+I might also eventually convert this app to use the Binance API as that exchange charges less fees.
+
+## Contributions
+
+Please email mwroberts89@gmail.com if you're interested in contributing
+
+## License
+
+MIT

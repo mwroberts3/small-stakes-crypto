@@ -1,8 +1,4 @@
-const personalData = require('./personal-data')
-
-let ETHAccountTotal;
-let totalBuyIn;
-let price = {data: 0, amount: 0};
+const personalData = require('./personal-data-pro')
 
 // If you just made a purchase
 exports.youJustBoughtCrypto = {
@@ -18,20 +14,30 @@ exports.youJustBoughtCrypto = {
 };
 
 // If you just made a purchase
-exports.youJustSoldCrypto = {
+exports.youJustSoldSafe = {
   from: `"Small Stakes - Crypto" <${personalData.email}>`,
   to: personalData.email,
-  subject: 'You Just Sold Crypto',
+  subject: 'You Just SAFE Sold Crypto',
   html: `
-  <strong>You just sold some crypto!</strong>
+  <strong>You just SAFE sold some crypto!</strong>
   <br>
   <br>
-  <p>You just sold some crypto!</p>
+  <p>You just sold SAFE some crypto!</p>
   `
 };
 
-
-
+// If you just made a purchase
+exports.youJustSoldHigh = {
+  from: `"Small Stakes - Crypto" <${personalData.email}>`,
+  to: personalData.email,
+  subject: 'You Just HIGH Sold Crypto',
+  html: `
+  <strong>You just HIGH sold some crypto!</strong>
+  <br>
+  <br>
+  <p>You just sold HIGH some crypto!</p>
+  `
+};
 
 // notification when a withdrawal is made from bank account
 exports.bankWithdrawal = {

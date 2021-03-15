@@ -5,13 +5,16 @@
   "main": "app.js",
   "dependencies": {
     "coinbase": "^2.0.8",
+    "coinbase-pro": "^0.9.0",
     "nodemailer": "^6.4.17"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
   },
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "nodemon price-data-cb-pro.js",
+    "small-stakes": "forever start price-data-cb-pro.js",
+    "stop": "forever stop price-data-cb-pro.js"
   },
   "author": "",
   "license": "ISC"
