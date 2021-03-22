@@ -1,0 +1,101 @@
+/* main styling */
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+}
+
+body {
+  padding-left: 50px;
+  position: relative;
+  width: 1000px;
+  margin: auto;
+}
+
+/* styles */
+h1 {
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* utilities */
+.hidden {
+  display: none !important;
+}
+
+.positive-change {
+  color: rgb(94, 250, 94);
+  font-weight: bold;
+}
+
+.negative-change {
+  color: #ff6464;
+  font-weight: bold;
+}
+
+.not-live {
+  color: red;
+}
+
+/* container(s) */
+#bot-settings {
+  margin-left: 25px;
+}
+
+#edit-setting-popup {
+  position: absolute;
+  top: 300px;
+  right: 200px;
+  background-color: #ccc;
+  color: black;
+  padding: 5px;
+  height: 150px;
+  width: 300px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+#edit-setting-popup input {
+  height: 30px;
+  border: 1px solid #888;
+  border-radius: 5px;
+}
+
+#edit-setting-popup button {
+  margin-top: 5px;
+  height: 25px;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #888;
+}
+
+.setting {
+  background: black;
+  color: white;
+  font-weight: bold;
+  padding: 0 5px;
+  border-radius: 5px;
+}
+
+.setting-line,
+.account-info-line,
+.haul-card {
+  padding: 10px 0;
+}
+
+#current-and-previous-price {
+  text-align: center;
+  background: black;
+  color: white;
+  font-weight: bold;
+  border-radius: 20px;
+}
+
+#account-info {
+  margin-left: 25px;
+}

@@ -7,7 +7,7 @@
 
 ## Features
 
-Basic Ether trading bot that works through the Coinbase API. Could be tweaked to work with any crypto coin.
+Basic Ether trading bot that works through the Coinbase Pro API. Could be tweaked to work with any crypto coin.
 
 ## Usage
 

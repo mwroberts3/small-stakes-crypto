@@ -1,0 +1,24 @@
+{
+  "smallStakesBotSettings": {
+    "basicBuySellAmount": 10,
+    "resetInterval": 10800000,
+    "spliceOffSafeGuard": 0.975,
+    "percentageDropTrigger": {
+      "withSellOffBalance": {
+        "oneDayDown": -1.2,
+        "oneDayUp": -0.75
+      },
+      "noSellOffBalance": -3
+    },
+    "HighSalePctTrigger": {
+      "rawDiffUpHighCutoff": 0.045,
+      "PctTriggers": {
+        "oneDayDown": 1.02,
+        "oneDayUpLow": 1.03,
+        "oneDayUpHigh": 1.05
+      }
+    },
+    "upsurgeSafetyBuyPctDrop": 0.98,
+    "downsurgeSafetyBuyPctDrop": 0.9655
+  }
+}

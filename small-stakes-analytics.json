@@ -1,0 +1,62 @@
+{
+"smallStakesAnalytics": {
+    "rebalanceHauls": [
+        {
+        "highSalePrice": 1841.63,
+        "size": 0.02714986,
+        "buyBackAvgPrice": 1816.202,
+        "buyBackSize": 0.02739382,
+        "postSaleHigh": 1847,
+        "postSaleLow": 1722.04
+        },
+        {
+        "highSalePrice": 1842.26,
+        "size": 0.02714057,
+        "buyBackAvgPrice": 1817.982,
+        "buyBackSize": 0.02736894,
+        "postSaleHigh": 1942.48,
+        "postSaleLow": 1707.04
+        },
+        {
+        "highSalePrice": 1892.06,
+        "size": 0.02642622,
+        "buyBackAvgPrice": 1867.46,
+        "buyBackSize": 0.02664197,
+        "postSaleHigh": 1942.48,
+        "postSaleLow": 1840
+        },
+        {
+        "highSalePrice": 1929.62,
+        "size": 0.02591183,
+        "buyBackAvgPrice": 1898.89,
+        "buyBackSize": 0.02620043,
+        "postSaleHigh": 1942.48,
+        "postSaleLow": 1873
+        },
+        {
+        "highSalePrice": 1827.99,
+        "size": 0.02735244,
+        "buyBackAvgPrice": 1805.82,
+        "buyBackSize": 0.02755074,
+        "postSaleHigh": 1848,
+        "postSaleLow": 1734
+        },
+        {
+        "highSalePrice": 1812.46,
+        "size": 0.02758681,
+        "buyBackAvgPrice": 1779.45,
+        "buyBackSize": 0.02796094,
+        "postSaleHigh": 1866,
+        "postSaleLow": 1750
+        },
+        {
+        "highSalePrice": 1826.46,
+        "size": 0.02737535,
+        "buyBackAvgPrice": 1811.29,
+        "buyBackSize": 0.02746815,
+        "postSaleHigh": 1840,
+        "postSaleLow": 1801
+        }
+    ]
+}
+}

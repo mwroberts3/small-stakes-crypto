@@ -33,7 +33,7 @@ const authedClient = new CoinbasePro.AuthenticatedClient(
 let smallStakesData;
 let previousIntervalHigh;
 // the price it's checking against resets after 3 hours
-let resetInterval = (9600 * 1000);
+let resetInterval = 10800000;
 let currentPercentageDrop = 0;
 let currentPriceInfo;
 
@@ -41,9 +41,17 @@ let highestBuyPrice;
 
 let highSalePct;
 let last24Price = 0;
+let postive24PriceChange = false;
 
 let amountToPurchase = 10;
 let amountToSell = 10;
+
+let smallStakesSettings = {};
+
+// Load settings
+smallStakesSettings = fs.readFileSync(path.join(__dirname, 'small-stakes-bot-settings.json')).toString('utf-8');
+smallStakesSettings = JSON.parse(smallStakesSettings).smallStakesBotSettings;
+console.log(smallStakesSettings);
 
 // Get current interval highest price
 fs.readFile((path.join(__dirname, 'small-stakes-data-pro.json')), (err, data) => {
@@ -66,9 +74,6 @@ function checkBuySellETH() {
 
             // get price 24hours ago for high sale purposes
             last24Price = ether.open;
-
-            // check for weekly bank deposit
-            checkForBankDeposit();
 
             // check previousIntervalHigh and potentially reset price info
             if (currentPriceInfo.time > previousIntervalHigh.time + resetInterval || currentPercentageDrop > 0) {
@@ -94,14 +99,16 @@ function checkBuySellETH() {
 
             // UPSURGE safetybuy 
             // CHECK if 24hours is a positive change
-            if (highSalePct >= 1.04) {
+            if (postive24PriceChange) {
                 upsurgeSaftetyBuy(currentPriceInfo.price);
+            } else {
+                downsurgeSafetyBuy(currentPriceInfo.price);
             }
 
             // CHECK price to adjust buyPriceHistory
-            // -2.75% from [0] in buyPriceHistory
-            if (currentPriceInfo.price <= highestBuyPrice * 0.9725) {
-                sellOffSafeGuard(currentPriceInfo.price);
+            // -2.5% from [0] in buyPriceHistory
+            if (currentPriceInfo.price <= highestBuyPrice * smallStakesSettings.spliceOffSafeGuard) {
+                spliceOffSafeGuard(currentPriceInfo.price);
             }
 
             // CHECK price for buying
@@ -113,7 +120,7 @@ function checkBuySellETH() {
             // log data
             console.log(
                 currentPriceInfo.price, previousIntervalHigh.buyPrice, currentPercentageDrop, dropPercentageTrigger,
-                `Safe-${+(highestBuyPrice * 0.9725).toFixed(2)}`,
+                `Safe-${+(highestBuyPrice * smallStakesSettings.spliceOffSafeGuard).toFixed(2)}`,
                 `High-${+(highestBuyPrice * highSalePct).toFixed(2)}`,
                 new Date(currentPriceInfo.time));
         })
@@ -148,28 +155,33 @@ function setPricePercentageDrop(price) {
     // the top condition leaves a little buffer zone for after the High sale is completed
     // percentage drop is set depending on the price percentage change over the previous 24 hours
     if (smallStakesData['sellOffBank']['unbalancedSales'] > 0) {
-        if (highSalePct === 1.03 ) {
-            percentageDrop = -1.25;
+        if (highSalePct === smallStakesSettings.HighSalePctTrigger.PctTriggers.oneDayDown) {
+            percentageDrop = smallStakesSettings.percentageDropTrigger.withSellOffBalance.oneDayDown;
         } else {
-            percentageDrop = -0.75;
+            percentageDrop = smallStakesSettings.percentageDropTrigger.withSellOffBalance.oneDayUp;
         }
     } else {
-        percentageDrop = -3;
+        percentageDrop = smallStakesSettings.percentageDropTrigger.noSellOffBalance;
     }
 
     return percentageDrop;
 }
 
 function setHighSalePct(price, last24Price) {
-    // set necessary high sale percentage increase, depending on change over 24 hour open 
-    let rawDiff = -(((last24Price/price) - 1));
+    let setHighSalePctTriggers = smallStakesSettings.HighSalePctTrigger;
 
+    // set necessary high sale percentage increase, depending on change over 24 hour open 
+    let rawDiff = (((last24Price/price) - 1));
+    
     if (rawDiff <= 0) {
-        highSalePct = 1.03;
-    } else if (rawDiff > 0.07) {
-        highSalePct = 1.05;
+        highSalePct = setHighSalePctTriggers.PctTriggers.oneDayDown;
+        postive24PriceChange = false;
+    } else if (rawDiff > setHighSalePctTriggers.rawDiffUpHighCutoff) {
+        highSalePct = setHighSalePctTriggers.PctTriggers.oneDayUpHigh;
+        postive24PriceChange = true;
     } else {
-        highSalePct = 1.04;
+        highSalePct = setHighSalePctTriggers.PctTriggers.oneDayUpLow;
+        postive24PriceChange = true;
     }
 }
 
@@ -184,7 +196,7 @@ function purchaseCoin(price) {
     // set to 99.5% to offset any price increase that happens in between the price being logged and the order being opened
     if (smallStakesData['sellOffBank']['unbalancedSales'] > 0){
         if (smallStakesData['lastHighSale']['prices'][0]['unbalancedSales'] > 0) {
-            if (price >= (smallStakesData['lastHighSale']['prices'][0]['price'] * 0.995) && smallStakesData['lastHighSale']['prices'][0]['price'] > 0) {
+            if (price >= (smallStakesData['lastHighSale']['prices'][0]['price'] * 0.99) && smallStakesData['lastHighSale']['prices'][0]['price'] > 0) {
                 amountToPurchase = 0;
                 console.log('price too high');
     
@@ -368,7 +380,7 @@ function upsurgeSaftetyBuy(price) {
     smallStakesData = JSON.parse(smallStakesData);
 
     if(smallStakesData['sellOffBank']['unbalancedSales'] > 0) {
-        if (price <= smallStakesData['lastHighSale']['prices'][0]['price'] * 0.98) {
+        if (price <= smallStakesData['lastHighSale']['prices'][0]['price'] * smallStakesSettings.upsurgeSafetyBuyPctDrop) {
             amountToPurchase = 10;
             unbalancedSalesToSubtract = smallStakesData['lastHighSale']['prices'][0]['unbalancedSales'];
 
@@ -441,11 +453,93 @@ function upsurgeSaftetyBuy(price) {
                 resetPctDropTimer(price, new Date().getTime());
             })
         }
+    }
+}
+
+function downsurgeSafetyBuy(price) {
+    // load data
+    smallStakesData = fs.readFileSync(path.join(__dirname, 'small-stakes-data-pro.json')).toString('utf-8');
+    smallStakesData = JSON.parse(smallStakesData);
+
+    if(smallStakesData['sellOffBank']['unbalancedSales'] > 0) {
+        if (price <= smallStakesData['lastHighSale']['prices'][0]['price'] * smallStakesSettings.downsurgeSafetyBuyPctDrop) {
+            amountToPurchase = 10;
+            unbalancedSalesToSubtract = smallStakesData['lastHighSale']['prices'][0]['unbalancedSales'];
+
+            const params = {
+                type: 'market',
+                side: 'buy',
+                funds: amountToPurchase * unbalancedSalesToSubtract,
+                product_id: 'ETH-USD'
+            };
+
+            authedClient.placeOrder(params)
+            .then(res => {
+                console.log(res);
+
+                authedClient.getFills({ product_id: 'ETH-USD', order_id: res.id })
+                    .then(fill => {
+                        console.log('upsurgeSaftetyBuy()');
+
+                        // update transactionHistory
+                        smallStakesData['allTransHistory'].push({
+                            price: +fill[0].price,
+                            side: 'buy',
+                            size: +fill[0].size
+                        });
+                        
+                        smallStakesData['buyPriceHistory'].push(+fill[0].price);
+
+                        smallStakesData['buyPriceHistory'].sort((a,b) => {
+                        return b - a;
+                        });
+
+                                                                                    // remove from lastHighestSale[]
+                        if (smallStakesData['sellOffBank']['unbalancedSales'] > 0) {
+                            smallStakesData['lastHighSale']['prices'].splice(0,1);
+                        }
+
+                        // subtract from sellOffBank
+                        smallStakesData['sellOffBank']['unbalancedSales'] -= unbalancedSalesToSubtract;
+
+                        smallStakesData['sellOffBank']['ETHbalance'] += +fill[0].size;
+
+                        // save changes to small-stakes-data.json
+                        fs.writeFileSync(path.join(__dirname, 'small-stakes-data-pro.json'), JSON.stringify(smallStakesData));
+
+                        // reset timer
+                        resetPctDropTimer(price, new Date().getTime());
+                })
+                .catch(err => {
+                    console.log('ERROR GETTING FILL DETAILS');
+
+                    // update transaction history with dummy data
+                    smallStakesData['allTransHistory'].push({
+                        price: 'error',
+                        side: 'buy',
+                        size: 'error'
+                    });
+
+                    // save changes to small-stakes-data.json
+                    fs.writeFileSync(path.join(__dirname, 'small-stakes-data-pro.json'), JSON.stringify(smallStakesData));
+
+                    // reset timer
+                    resetPctDropTimer(price, new Date().getTime());
+                })
+            })
+            .catch(err => {
+                console.log('NOT ENOUGH USD');
+                console.log(err);
+    
+                // reset timer
+                resetPctDropTimer(price, new Date().getTime());
+            })
+        }
 }
 }
 
 
-function sellOffSafeGuard(price) {
+function spliceOffSafeGuard(price) {
     // Load small stakes data
     smallStakesData = fs.readFileSync(path.join(__dirname, 'small-stakes-data-pro.json')).toString('utf-8');
     smallStakesData = JSON.parse(smallStakesData);
@@ -477,6 +571,3 @@ function resetPctDropTimer(price, time) {
     });
 }
 
-function checkForBankDeposit() {
-
-}
